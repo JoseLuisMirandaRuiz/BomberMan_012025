@@ -3,9 +3,12 @@
 #include "BomberMan_012025GameMode.h"
 #include "BomberMan_012025Character.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Muro_de_concreto.h"
 #include "Bloque.h"
 #include "Muro.h"
 #include "Dona.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
 
 ABomberMan_012025GameMode::ABomberMan_012025GameMode()
 {
@@ -21,7 +24,10 @@ void ABomberMan_012025GameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Mensajes de depuraci髇 en pantalla
+	// Iniciar el ciclo de aparici贸n y desaparici贸n
+        HandleWallCycle();
+
+	// Mensajes de depuraci贸n en pantalla
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Spawn de Bloques, Muros y Luna iniciado"));
@@ -68,3 +74,69 @@ void ABomberMan_012025GameMode::BeginPlay()
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("La dona fue creada exitosamente"));
 	}
 }
+//muro de concreto spawning
+void ABomberMan_012025GameMode::HandleWallCycle()
+{
+    // Si los muros ya est谩n presentes, destruirlos
+    if (SpawnedWalls.Num() > 0)
+    {
+        DestroyConcreteWall();
+    }
+    else
+    {
+        // Si los muros no est谩n presentes, generarlos
+        SpawnConcreteWall();
+    }
+
+    // Configurar el temporizador para el pr贸ximo ciclo
+    GetWorld()->GetTimerManager().SetTimer(WallCycleTimerHandle, this, &ABomberMan_012025GameMode::HandleWallCycle, WallCycleInterval, false);
+}
+
+void ABomberMan_012025GameMode::SpawnConcreteWall()
+{
+ 
+    for (int i = 0; i < 8; ++i)
+    {
+        FVector Location = SpawnLocation + FVector(i * 100.0f, 0.0f, 0.0f);
+        FRotator Rotation = FRotator::ZeroRotator;
+        AMuro_de_concreto* NewWall = GetWorld()->SpawnActor<AMuro_de_concreto>(AMuro_de_concreto::StaticClass(), Location, Rotation);
+        SpawnedWalls.Add(NewWall);
+    }
+
+    for (int i = 0; i < 6; ++i)
+    {
+        FVector Location = SpawnLocation + FVector(800.0f, i * 100.0f, 0.0f);
+        FRotator Rotation = FRotator::ZeroRotator;
+        AMuro_de_concreto* NewWall = GetWorld()->SpawnActor<AMuro_de_concreto>(AMuro_de_concreto::StaticClass(), Location, Rotation);
+        SpawnedWalls.Add(NewWall);
+    }
+ 
+    for (int i = 0; i < 3; ++i)
+    {
+        FVector Location = SpawnLocation + FVector((800.0f - i * 100.0f), 600.0f, 0.0f);
+        FRotator Rotation = FRotator::ZeroRotator;
+        AMuro_de_concreto* NewWall = GetWorld()->SpawnActor<AMuro_de_concreto>(AMuro_de_concreto::StaticClass(), Location, Rotation);
+        SpawnedWalls.Add(NewWall);
+    }
+    
+    for (int i = 0; i < 4; ++i)
+    {
+        FVector Location = SpawnLocation + FVector(900.0f, (600.0f - i * 100.0f), 0.0f);
+        FRotator Rotation = FRotator::ZeroRotator;
+        AMuro_de_concreto* NewWall = GetWorld()->SpawnActor<AMuro_de_concreto>(AMuro_de_concreto::StaticClass(), Location, Rotation);
+        SpawnedWalls.Add(NewWall);
+    }
+}
+
+void ABomberMan_012025GameMode::DestroyConcreteWall()
+{
+    for (AMuro_de_concreto* Wall : SpawnedWalls)
+    {
+        if (Wall)
+        {
+            Wall->Destroy();
+        }
+    }
+    SpawnedWalls.Empty(); // Vaciar el array despu茅s de destruir los muros
+}
+
